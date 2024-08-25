@@ -3,13 +3,16 @@ const path = require('path');
 
 // Configuration for file storage
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Set destination folder
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // Folder where files will be saved
   },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
-    cb(null, uniqueName); // Set file name
+  filename: function (req, file, cb) {
+    // Create a unique filename using the current timestamp
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)
+    );
   },
 });
 

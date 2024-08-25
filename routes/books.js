@@ -9,6 +9,7 @@ const {
   createBook,
   deleteBook,
   updateBook,
+  addRating,
 } = require('../controlers/books');
 
 // Route to get books with the best rating
@@ -24,14 +25,12 @@ router.get('/:id', getSingleBook);
 router.post('/', auth, multer.single('image'), createBook);
 
 // Route to update a book by ID
-router.put('/:id', auth, updateBook);
+router.put('/:id', auth, multer.single('image'), updateBook);
 
 // Route to delete a book by ID
 router.delete('/:id', auth, deleteBook);
 
 // Route to add a rating to a book by ID
-router.post('/:id/rating', auth, (req, res) => {
-  res.json(`Add Rating to Book: ${req.params.id}`);
-});
+router.post('/:id/rating', auth, addRating);
 
 module.exports = router;

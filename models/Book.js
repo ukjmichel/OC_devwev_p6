@@ -56,6 +56,9 @@ const bookSchema = new Schema({
   averageRating: {
     type: Number,
     default: 0,
+    set: function (value) {
+      return parseFloat(value).toFixed(2);
+    },
   },
 });
 
