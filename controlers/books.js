@@ -79,9 +79,10 @@ const createBook = asyncWrapper(async (req, res, next) => {
 
 const updateBook = asyncWrapper(async (req, res, next) => {
   const { id } = req.params;
-  const { title, author, year, genre, ratings, averageRating } = req.body;
+  let book = req.body;
+  const { title, author, year, genre, ratings, averageRating } = book;
   let imageUrl = req.file ? `http://localhost:5000/${req.file.path}` : null;
-  imageUrl = imageUrl.replace(/\\/g, '/');
+  imageUrl = imageUrl ? imageUrl.replace(/\\/g, '/') : null;
 
   // Construct the update object
   const updateFields = {
