@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const connectDB = require('./db/connect');
 const errorHandler = require('./middlewares/errorHandler');
+const checkBookOwnership = require('./middlewares/checkBookOwnership ');
 
 require('dotenv').config();
 

@@ -133,17 +133,23 @@ const updateBook = asyncWrapper(async (req, res, next) => {
 const deleteBook = asyncWrapper(async (req, res, next) => {
   const { id } = req.params;
 
-  // Attempt to delete the book with the specified ID
-  const result = await Book.findByIdAndDelete(id);
+  try {
+    // Attempt to delete the book with the specified ID
+    const result = await Book.findByIdAndDelete(id);
 
-  if (!result) {
-    const error = new Error('Book not found');
-    error.statusCode = 404;
-    return next(error); // Pass the error to the error-handling middleware
+    // Check if the book was found and deleted
+    if (!result) {
+      const error = new Error('Book not found');
+      error.statusCode = 404;
+      return next(error); // Pass the error to the error-handling middleware
+    }
+
+    // If successful, return a 200 status with a message
+    res.status(200).json({ message: `The book with id ${id} was deleted` });
+  } catch (error) {
+    // Handle any other errors that occurred during the process
+    next(error);
   }
-
-  // If successful, return a 204 status with no content
-  res.status(204).send();
 });
 
 const addRating = asyncWrapper(async (req, res, next) => {
