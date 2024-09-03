@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/authentication');
-const checkUser = require('../middlewares/checkUserIdMatch');
 const multer = require('../middlewares/multer-config'); // For handling file uploads
 const {
   getAllBooks,
@@ -26,10 +25,10 @@ router.get('/:id', getSingleBook);
 router.post('/', auth, multer.single('image'), createBook);
 
 // Route to update a book by ID
-router.put('/:id', auth, checkUser, multer.single('image'), updateBook);
+router.put('/:id', auth, multer.single('image'), updateBook);
 
 // Route to delete a book by ID
-router.delete('/:id', auth, checkUser, deleteBook);
+router.delete('/:id', auth, deleteBook);
 
 // Route to add a rating to a book by ID
 router.post('/:id/rating', auth, addRating);
