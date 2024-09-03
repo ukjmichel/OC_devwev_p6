@@ -16,7 +16,9 @@ const getSingleBook = asyncWrapper(async (req, res, next) => {
   const book = await Book.findById(id); // Find the book by ID
 
   if (!book) {
-    return res.status(404).json({ message: 'Book not found' }); // Handle case where book is not found
+    const error = new Error('Book not found');
+    error.statusCode = 404;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   res.status(200).json(book); // Return the book data
@@ -103,7 +105,9 @@ const updateBook = asyncWrapper(async (req, res, next) => {
   );
 
   if (!updatedBook) {
-    return res.status(404).json({ message: 'Book not found' });
+    const error = new Error('Book not found');
+    error.statusCode = 404;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   res.status(200).json({ book: updatedBook });
@@ -116,8 +120,9 @@ const deleteBook = asyncWrapper(async (req, res, next) => {
   const result = await Book.findByIdAndDelete(id);
 
   if (!result) {
-    // If no book was found with the given ID, return a 404 error
-    return res.status(404).json({ message: 'Book not found' });
+    const error = new Error('Book not found');
+    error.statusCode = 404;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   // If successful, return a 204 status with no content
@@ -130,23 +135,25 @@ const addRating = asyncWrapper(async (req, res, next) => {
 
   // Validate the rating
   if (typeof rating !== 'number' || rating < 0 || rating > 5) {
-    return res
-      .status(400)
-      .json({ message: 'Rating must be a number between 0 and 5' });
+    const error = new Error('Rating must be a number between 0 and 5');
+    error.statusCode = 400;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   // Find the book by ID
   const book = await Book.findById(id);
   if (!book) {
-    return res.status(404).json({ message: 'Book not found' });
+    const error = new Error('Book not found');
+    error.statusCode = 404;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   // Check if the user has already rated this book
   const existingRating = book.ratings.find((r) => r.userId === userId);
   if (existingRating) {
-    return res
-      .status(400)
-      .json({ message: 'User has already rated this book' });
+    const error = new Error('User has already rated this book');
+    error.statusCode = 400;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   // Add the new rating to the ratings array
@@ -161,9 +168,7 @@ const addRating = asyncWrapper(async (req, res, next) => {
   const updatedBook = await book.save();
 
   // Return the updated book with the new rating
-  res
-    .status(200)
-    .json({ message: 'Rating added successfully', book: updatedBook });
+  res.status(200).json(updatedBook);
 });
 
 module.exports = {

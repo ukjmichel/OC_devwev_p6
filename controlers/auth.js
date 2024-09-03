@@ -7,14 +7,18 @@ const signup = asyncWrapper(async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+    const error = new Error('Email and password are required');
+    error.statusCode = 400;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   try {
     // Check if the email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already registered' });
+      const error = new Error('Email already registered');
+      error.statusCode = 400;
+      return next(error); // Pass the error to the error-handling middleware
     }
 
     // Create a new user
@@ -23,7 +27,7 @@ const signup = asyncWrapper(async (req, res, next) => {
 
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
-    next(error);
+    next(error); // Pass any unexpected errors to the error-handling middleware
   }
 });
 
@@ -32,19 +36,25 @@ const login = asyncWrapper(async (req, res, next) => {
 
   // Check if email and password are provided
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+    const error = new Error('Email and password are required');
+    error.statusCode = 400;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   // Find the user by email
   const user = await User.findOne({ email });
   if (!user) {
-    return res.status(401).json({ message: 'Invalid email or password' });
+    const error = new Error('Invalid email or password');
+    error.statusCode = 401;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   // Compare the provided password with the stored hashed password
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    return res.status(401).json({ message: 'Invalid email or password' });
+    const error = new Error('Invalid email or password');
+    error.statusCode = 401;
+    return next(error); // Pass the error to the error-handling middleware
   }
 
   // Create a JWT token with the userId as payload
