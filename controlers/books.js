@@ -81,35 +81,53 @@ const createBook = asyncWrapper(async (req, res, next) => {
 
 const updateBook = asyncWrapper(async (req, res, next) => {
   const { id } = req.params;
-  const { title, author, year, genre, ratings, averageRating } = req.body;
-  let imageUrl = req.file ? `http://localhost:5000/${req.file.path}` : null;
-  imageUrl = imageUrl.replace(/\\/g, '/');
 
-  // Construct the update object
-  const updateFields = {
-    ...(title && { title }),
-    ...(author && { author }),
-    ...(year && { year: parseInt(year, 10) }),
-    ...(genre && { genre }),
-    ...(ratings && { ratings: JSON.parse(ratings) }),
-    ...(averageRating && { averageRating: parseFloat(averageRating) }),
-    ...(imageUrl && { imageUrl }),
-  };
+  // Initialize updateFields with request body
+  const updateFields = { ...req.body };
 
-  // Find the book by ID and update it
-  const updatedBook = await Book.findOneAndUpdate(
-    { _id: id },
-    { $set: updateFields },
-    { new: true, runValidators: true } // Options to return the updated document and run validation
-  );
-
-  if (!updatedBook) {
-    const error = new Error('Book not found');
-    error.statusCode = 404;
-    return next(error); // Pass the error to the error-handling middleware
+  // Handle file upload separately if a file is present
+  if (req.file) {
+    updateFields.imageUrl = `http://localhost:5000/${req.file.path}`.replace(
+      /\\/g,
+      '/'
+    );
   }
 
-  res.status(200).json({ book: updatedBook });
+  // Perform type conversion on specific fields
+  if (updateFields.year) {
+    updateFields.year = parseInt(updateFields.year, 10);
+  }
+
+  if (updateFields.ratings) {
+    try {
+      updateFields.ratings = JSON.parse(updateFields.ratings);
+    } catch (error) {
+      return res.status(400).json({ message: 'Invalid ratings format' });
+    }
+  }
+
+  if (updateFields.averageRating) {
+    updateFields.averageRating = parseFloat(updateFields.averageRating);
+  }
+
+  // Update the book and handle potential errors
+  try {
+    const updatedBook = await Book.findOneAndUpdate(
+      { _id: id },
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedBook) {
+      const error = new Error('Book not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    res.status(200).json(updatedBook);
+  } catch (error) {
+    next(error); // Handle unexpected errors
+  }
 });
 
 const deleteBook = asyncWrapper(async (req, res, next) => {
