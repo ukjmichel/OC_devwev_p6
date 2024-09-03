@@ -4,7 +4,6 @@ const bodyParser = require('body-parser');
 const app = express();
 const connectDB = require('./db/connect');
 const errorHandler = require('./middlewares/errorHandler');
-const checkBookOwnership = require('./middlewares/checkBookOwnership ');
 
 require('dotenv').config();
 
@@ -21,9 +20,9 @@ app.use(
     credentials: true, // If you need to send cookies or authentication headers
   })
 );
-app.use(bodyParser.json());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(express.json()); // parse incoming request bodies in JSON format.
+app.use(express.urlencoded({ extended: true })); // parses incoming requests with URL-encoded payloads.
 app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRouter);
 app.use('/api/books', booksRouter);

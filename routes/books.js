@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/authentication');
 const checkBookOwnership = require('../middlewares/checkBookOwnership ');
-const multer = require('../middlewares/multer-config'); // For handling file uploads
+const imageProcessor = require('../middlewares/imageProcessor'); // For handling file uploads
 const {
   getAllBooks,
   getSingleBook,
@@ -13,31 +13,15 @@ const {
   addRating,
 } = require('../controlers/books');
 
-// Route to get books with the best rating
 router.get('/bestrating', getTopRatedBooks);
 
-// Route to get all books
-router.get('/', getAllBooks);
+router.get('/', getAllBooks).post('/', auth, imageProcessor, createBook);
 
-// Route to get a book by ID
-router.get('/:id', getSingleBook);
+router
+  .get('/:id', getSingleBook)
+  .put('/:id', auth, checkBookOwnership, imageProcessor, updateBook)
+  .delete('/:id', auth, checkBookOwnership, deleteBook);
 
-// Route to create a new book
-router.post('/', auth, multer.single('image'), createBook);
-
-// Route to update a book by ID
-router.put(
-  '/:id',
-  auth,
-  checkBookOwnership,
-  multer.single('image'),
-  updateBook
-);
-
-// Route to delete a book by ID
-router.delete('/:id', auth, checkBookOwnership, deleteBook);
-
-// Route to add a rating to a book by ID
 router.post('/:id/rating', auth, addRating);
 
 module.exports = router;

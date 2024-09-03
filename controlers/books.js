@@ -36,68 +36,72 @@ const getTopRatedBooks = asyncWrapper(async (req, res, next) => {
 
 // Create a new book
 const createBook = asyncWrapper(async (req, res, next) => {
-  // Extract data from request
-  let newBook = req.body.book;
+  try {
+    // Parse book data from the request body
+    const newBook =
+      typeof req.body.book === 'string'
+        ? JSON.parse(req.body.book)
+        : req.body.book;
 
-  // If `newBook` is a JSON string, parse it
-  if (typeof newBook === 'string') {
-    newBook = JSON.parse(newBook);
+    // Ensure the year is a number
+    newBook.year = Number(newBook.year) || null;
+
+    // Handle image upload and generate the image URL
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    const imageUrl = req.processedImage
+      ? `${baseUrl}/uploads/${req.processedImage.filename}`
+      : null;
+
+    // Create a new Book instance
+    const book = new Book({
+      ...newBook,
+      imageUrl,
+      ratings: Array.isArray(newBook.ratings) ? newBook.ratings : [],
+      averageRating: parseFloat(newBook.averageRating) || 0,
+    });
+
+    // Save the book to the database
+    const savedBook = await book.save();
+
+    // Respond with the saved book
+    res.status(201).json({ book: savedBook });
+  } catch (error) {
+    // If book creation fails after image processing, consider removing the processed image
+    if (req.processedImage && fs.existsSync(req.processedImage.filepath)) {
+      fs.unlinkSync(req.processedImage.filepath);
+    }
+    // Pass the error to the next middleware
+    next(error);
   }
-
-  // Convert year to number if it's not already
-  newBook.year = parseInt(newBook.year, 10);
-
-  console.log(newBook);
-
-  // Extract properties from the newBook object
-  const { userId, title, author, year, genre, ratings, averageRating } =
-    newBook;
-
-  // Handle file upload
-  let imageUrl = req.file ? `http://localhost:5000/${req.file.path}` : null;
-  imageUrl = imageUrl.replace(/\\/g, '/');
-
-  // Create a new Book instance
-  const book = new Book({
-    userId,
-    title,
-    author,
-    imageUrl,
-    year,
-    genre,
-    ratings: Array.isArray(ratings) ? ratings : [], // Ensure ratings is an array
-    averageRating:
-      typeof averageRating === 'number'
-        ? averageRating
-        : parseFloat(averageRating) || 0,
-  });
-
-  // Save the book to the database
-  const savedBook = await book.save();
-
-  // Respond with the saved book
-  res.status(201).json({ book: savedBook });
 });
 
 const updateBook = asyncWrapper(async (req, res, next) => {
   const { id } = req.params;
 
   // Initialize updateFields with request body
-  const updateFields = { ...req.body };
+  let updateFields = req.body;
 
-  // Handle file upload separately if a file is present
-  if (req.file) {
-    updateFields.imageUrl = `http://localhost:5000/${req.file.path}`.replace(
-      /\\/g,
-      '/'
-    );
+  // If the 'book' field is sent as a JSON string, parse it
+  if (typeof updateFields.book === 'string') {
+    updateFields = JSON.parse(updateFields.book);
   }
 
-  // Perform type conversion on specific fields
+  // Ensure the year is converted to a number
   if (updateFields.year) {
-    updateFields.year = parseInt(updateFields.year, 10);
+    const year = parseInt(updateFields.year, 10);
+    if (isNaN(year)) {
+      return res.status(400).json({ message: 'Year must be a valid number' });
+    }
+    updateFields.year = year;
   }
 
+  // If there is a processed image, add the image URL to the updateFields
+  if (req.processedImage) {
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    updateFields.imageUrl = `${baseUrl}/uploads/${req.processedImage.filename}`;
+  }
+
+  // Handle ratings if provided
   if (updateFields.ratings) {
     try {
       updateFields.ratings = JSON.parse(updateFields.ratings);
@@ -106,12 +110,13 @@ const updateBook = asyncWrapper(async (req, res, next) => {
     }
   }
 
+  // Convert averageRating to a float
   if (updateFields.averageRating) {
     updateFields.averageRating = parseFloat(updateFields.averageRating);
   }
 
-  // Update the book and handle potential errors
   try {
+    // Find the book by ID and update it
     const updatedBook = await Book.findOneAndUpdate(
       { _id: id },
       { $set: updateFields },
@@ -119,14 +124,13 @@ const updateBook = asyncWrapper(async (req, res, next) => {
     );
 
     if (!updatedBook) {
-      const error = new Error('Book not found');
-      error.statusCode = 404;
-      return next(error);
+      return res.status(404).json({ message: 'Book not found' });
     }
 
     res.status(200).json(updatedBook);
   } catch (error) {
-    next(error); // Handle unexpected errors
+    // If there was an error during update, handle it here
+    next(error);
   }
 });
 
@@ -134,20 +138,32 @@ const deleteBook = asyncWrapper(async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    // Attempt to delete the book with the specified ID
-    const result = await Book.findByIdAndDelete(id);
+    // Find the book and delete it
+    const book = await Book.findByIdAndDelete(id);
 
-    // Check if the book was found and deleted
-    if (!result) {
+    // If book is not found, return an error
+    if (!book) {
       const error = new Error('Book not found');
       error.statusCode = 404;
-      return next(error); // Pass the error to the error-handling middleware
+      return next(error);
     }
 
-    // If successful, return a 200 status with a message
+    // If the book had an associated image, delete the image file
+    if (book.imageUrl) {
+      const imagePath = path.join(
+        __dirname,
+        '../uploads',
+        path.basename(book.imageUrl)
+      );
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    // Respond with a success message
     res.status(200).json({ message: `The book with id ${id} was deleted` });
   } catch (error) {
-    // Handle any other errors that occurred during the process
+    // Handle unexpected errors
     next(error);
   }
 });
