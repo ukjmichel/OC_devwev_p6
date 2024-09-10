@@ -57,7 +57,6 @@ const createBook = asyncWrapper(async (req, res, next) => {
       ...newBook,
       imageUrl,
       ratings: Array.isArray(newBook.ratings) ? newBook.ratings : [],
-      averageRating: parseFloat(newBook.averageRating) || 0,
     });
 
     // Save the book to the database
@@ -108,11 +107,6 @@ const updateBook = asyncWrapper(async (req, res, next) => {
     } catch (error) {
       return res.status(400).json({ message: 'Invalid ratings format' });
     }
-  }
-
-  // Convert averageRating to a float
-  if (updateFields.averageRating) {
-    updateFields.averageRating = parseFloat(updateFields.averageRating);
   }
 
   try {
@@ -197,11 +191,6 @@ const addRating = asyncWrapper(async (req, res, next) => {
 
   // Add the new rating to the ratings array
   book.ratings.push({ userId, grade: rating });
-
-  // Update the average rating
-  const totalRatings = book.ratings.length;
-  const sumRatings = book.ratings.reduce((acc, r) => acc + r.grade, 0);
-  book.averageRating = sumRatings / totalRatings;
 
   // Save the updated book
   const updatedBook = await book.save();
