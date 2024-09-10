@@ -12,23 +12,19 @@ const signup = asyncWrapper(async (req, res, next) => {
     return next(error); // Pass the error to the error-handling middleware
   }
 
-  try {
-    // Check if the email already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      const error = new Error('Email already registered');
-      error.statusCode = 400;
-      return next(error); // Pass the error to the error-handling middleware
-    }
-
-    // Create a new user
-    const newUser = new User({ email, password });
-    await newUser.save();
-
-    res.status(201).json({ message: 'User created successfully' });
-  } catch (error) {
-    next(error); // Pass any unexpected errors to the error-handling middleware
+  // Check if the email already exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    const error = new Error('Email already registered');
+    error.statusCode = 400;
+    return next(error); // Pass the error to the error-handling middleware
   }
+
+  // Create a new user
+  const newUser = new User({ email, password });
+  await newUser.save();
+
+  res.status(201).json({ message: 'User created successfully' });
 });
 
 const login = asyncWrapper(async (req, res, next) => {
@@ -61,7 +57,7 @@ const login = asyncWrapper(async (req, res, next) => {
   const token = jwt.sign(
     { userId: user._id },
     process.env.JWT_SECRET, // Ensure JWT_SECRET is set in your environment variables
-    { expiresIn: '1h' } // Token expires in 1 hour
+    { expiresIn: process.env.JWT_LIFETIME } // Token expires in 1 hour
   );
 
   // Return the userId and token

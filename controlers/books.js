@@ -166,36 +166,32 @@ const addRating = asyncWrapper(async (req, res, next) => {
   const { id } = req.params;
   const { userId, rating } = req.body;
 
-  // Validate the rating
-  if (typeof rating !== 'number' || rating < 0 || rating > 5) {
-    const error = new Error('Rating must be a number between 0 and 5');
+  if (typeof rating !== 'number' || rating < 0 || rating > 10) {
+    const error = new Error('Rating must be a number between 0 and 10');
     error.statusCode = 400;
-    return next(error); // Pass the error to the error-handling middleware
+    return next(error);
   }
 
-  // Find the book by ID
   const book = await Book.findById(id);
   if (!book) {
     const error = new Error('Book not found');
     error.statusCode = 404;
-    return next(error); // Pass the error to the error-handling middleware
+    return next(error);
   }
 
-  // Check if the user has already rated this book
   const existingRating = book.ratings.find((r) => r.userId === userId);
   if (existingRating) {
     const error = new Error('User has already rated this book');
     error.statusCode = 400;
-    return next(error); // Pass the error to the error-handling middleware
+    return next(error);
   }
 
-  // Add the new rating to the ratings array
+  // Add the new rating
   book.ratings.push({ userId, grade: rating });
 
-  // Save the updated book
+  // Save the book (this will trigger the pre-save hook and recalculate the average rating)
   const updatedBook = await book.save();
 
-  // Return the updated book with the new rating
   res.status(200).json(updatedBook);
 });
 

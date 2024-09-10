@@ -36,25 +36,29 @@ const bookSchema = new Schema({
         type: Number,
         required: true,
         min: 0,
-        max: 10, // Assuming ratings are on a scale from 0 to 10
+        max: 5,
       },
     },
   ],
+  averageRating: {
+    type: Number,
+    default: 0, // Set default to 0
+  },
 });
 
-// Virtual field to calculate the average rating
-bookSchema.virtual('averageRating').get(function () {
-  if (this.ratings.length === 0) return 0; // No ratings, return 0
-
-  // Sum all the grades
-  const total = this.ratings.reduce((sum, rating) => sum + rating.grade, 0);
-
-  // Calculate the average and return it, formatted to 2 decimal places
-  return (total / this.ratings.length).toFixed(2);
+// Middleware to calculate the average rating before saving
+bookSchema.pre('save', function (next) {
+  if (this.ratings.length === 0) {
+    this.averageRating = 0;
+  } else {
+    const sumRatings = this.ratings.reduce(
+      (sum, rating) => sum + rating.grade,
+      0
+    );
+    this.averageRating = (sumRatings / this.ratings.length).toFixed(2); // Calculate the average rating
+  }
+  next();
 });
-
-// Ensure virtual fields are serialized in JSON
-bookSchema.set('toJSON', { virtuals: true });
 
 // Create and export the Book model
 const Book = mongoose.model('Book', bookSchema);

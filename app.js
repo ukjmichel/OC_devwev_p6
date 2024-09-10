@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const app = express();
 const connectDB = require('./db/connect');
 const errorHandler = require('./middlewares/errorHandler');
@@ -32,7 +31,7 @@ app.use(errorHandler);
 
 /**       */
 app.get('/', (req, res) => {
-  res.send('<h1>Home Page</h1>');
+  res.send('<h1>Mon Vieux Grimoire API</h1>');
 });
 
 const start = async () => {
