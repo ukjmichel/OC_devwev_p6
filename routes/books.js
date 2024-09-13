@@ -15,10 +15,10 @@ const {
 
 router.get('/bestrating', getTopRatedBooks);
 
-router.get('/', getAllBooks).post('/', auth, imageProcessor, createBook);
+router.get('/', getAllBooks).post('/', auth, createBook);
 
 router
-  .get('/:id', getSingleBook)
+  .get('/:id', auth, getSingleBook)
   .put('/:id', auth, checkBookOwnership, imageProcessor, updateBook)
   .delete('/:id', auth, checkBookOwnership, deleteBook);
 
