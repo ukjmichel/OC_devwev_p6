@@ -15,7 +15,7 @@ const {
 
 router.get('/bestrating', getTopRatedBooks);
 
-router.get('/', getAllBooks).post('/', auth, createBook);
+router.get('/', getAllBooks).post('/', auth, imageProcessor, createBook);
 
 router
   .get('/:id', getSingleBook)

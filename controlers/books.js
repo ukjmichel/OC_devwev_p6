@@ -131,35 +131,30 @@ const updateBook = asyncWrapper(async (req, res, next) => {
 const deleteBook = asyncWrapper(async (req, res, next) => {
   const { id } = req.params;
 
-  try {
-    // Find the book and delete it
-    const book = await Book.findByIdAndDelete(id);
+  // Find the book and delete it
+  const book = await Book.findByIdAndDelete(id);
 
-    // If book is not found, return an error
-    if (!book) {
-      const error = new Error('Book not found');
-      error.statusCode = 404;
-      return next(error);
-    }
-
-    // If the book had an associated image, delete the image file
-    if (book.imageUrl) {
-      const imagePath = path.join(
-        __dirname,
-        '../uploads',
-        path.basename(book.imageUrl)
-      );
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    }
-
-    // Respond with a success message
-    res.status(200).json({ message: `The book with id ${id} was deleted` });
-  } catch (error) {
-    // Handle unexpected errors
-    next(error);
+  // If book is not found, return an error
+  if (!book) {
+    const error = new Error('Book not found');
+    error.statusCode = 404;
+    return next(error);
   }
+
+  // If the book had an associated image, delete the image file
+  if (book.imageUrl) {
+    const imagePath = path.join(
+      __dirname,
+      '../uploads',
+      path.basename(book.imageUrl)
+    );
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+  }
+
+  // Respond with a success message
+  res.status(200).json({ message: `The book with id ${id} was deleted` });
 });
 
 const addRating = asyncWrapper(async (req, res, next) => {

@@ -39,7 +39,7 @@ const imageProcessor = async (req, res, next) => {
 
       // Process the image with Sharp
       const processedImage = await sharp(req.file.buffer)
-        .resize({ width: 800 }) // Resize the image to 800px width
+        .resize({ width: 300 }) // Resize the image to 800px width
         .toFormat('jpeg') // Convert to JPEG format
         .jpeg({ quality: 90 }) // Set JPEG quality to 90%
         .toBuffer();
